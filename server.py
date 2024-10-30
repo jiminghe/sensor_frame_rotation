@@ -19,7 +19,6 @@ def normalize_quaternion(q):
 
 def reorder_quaternion_for_threejs(q0, q1, q2, q3):
     # [q0, q1, q2, q3] -> [w, x, y, z] for ENU to Three.js conversion needs:
-    # Swap pitch and yaw
     return [q0, q2, q3, q1]  # Reorder for Three.js
 
 def packet_processing_thread(manager, callback):
