@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quaternion Visualization</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { display: block; }
+        .info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+        }
+        .label {
+            position: absolute;
+            color: white;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 5px;
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+        }
+        #original_label {
+            top: 60%;
+            left: 35%;
+        }
+        #reversed_label {
+            top: 60%;
+            left: 60%;
+        }
+    </style>
+</head>
+<body>
+    <div class="info" id="info">
+        <div>Original Euler Angles:</div>
+        <div id="original_euler"></div>
+        <div>Reversed Euler Angles:</div>
+        <div id="reversed_euler"></div>
+    </div>
+    <div class="label" id="original_label">Original</div>
+    <div class="label" id="reversed_label">Reversed</div>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.142.0/build/three.min.js"></script>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <script>
+        // Set up the scene, camera, and renderer
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Create materials for each face of the cubes
+        const materials = [
+            new THREE.MeshBasicMaterial({ color: 0xff0000 }), // Red
+            new THREE.MeshBasicMaterial({ color: 0x00ff00 }), // Green
+            new THREE.MeshBasicMaterial({ color: 0x0000ff }), // Blue
+            new THREE.MeshBasicMaterial({ color: 0xffff00 }), // Yellow
+            new THREE.MeshBasicMaterial({ color: 0xff00ff }), // Magenta
+            new THREE.MeshBasicMaterial({ color: 0x00ffff })  // Cyan
+        ];
+
+        // Create two cubes
+        const geometry = new THREE.BoxGeometry();
+        const originalCube = new THREE.Mesh(geometry, materials);
+        const reversedCube = new THREE.Mesh(geometry, materials);
+
+        // Position the cubes
+        originalCube.position.x = -1.5;  // Move left
+        reversedCube.position.x = 1.5;   // Move right
+
+        scene.add(originalCube);
+        scene.add(reversedCube);
+
+        camera.position.z = 5;
+
+        // Animate the scene
+        const animate = function () {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        };
+
+        animate();
+
+        // Set up WebSocket connection
+        const socket = io();
+
+        socket.on('quaternion_data', function (data) {
+            // Apply quaternion rotation to the original cube
+            originalCube.quaternion.set(data.original.q1, data.original.q2, data.original.q3, data.original.q0);
+
+            // Apply quaternion rotation to the reversed cube
+            reversedCube.quaternion.set(data.reversed.q1, data.reversed.q2, data.reversed.q3, data.reversed.q0);
+
+            // Display Euler angles for original and reversed quaternions
+            document.getElementById("original_euler").innerHTML = 
+                `Roll: ${data.original.euler.roll.toFixed(2)}, Pitch: ${data.original.euler.pitch.toFixed(2)}, Yaw: ${data.original.euler.yaw.toFixed(2)}`;
+
+            document.getElementById("reversed_euler").innerHTML = 
+                `Roll: ${data.reversed.euler.roll.toFixed(2)}, Pitch: ${data.reversed.euler.pitch.toFixed(2)}, Yaw: ${data.reversed.euler.yaw.toFixed(2)}`;
+        });
+
+        // Resize handling and adjust labels accordingly
+        window.addEventListener('resize', function() {
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+        });
+    </script>
+</body>
+</html>
