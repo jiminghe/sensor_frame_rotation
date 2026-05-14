@@ -54,15 +54,44 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
-        // Create materials for each face of the cubes
-        const materials = [
-            new THREE.MeshBasicMaterial({ color: 0xff0000 }), // Red
-            new THREE.MeshBasicMaterial({ color: 0x00ff00 }), // Green
-            new THREE.MeshBasicMaterial({ color: 0x0000ff }), // Blue
-            new THREE.MeshBasicMaterial({ color: 0xffff00 }), // Yellow
-            new THREE.MeshBasicMaterial({ color: 0xff00ff }), // Magenta
-            new THREE.MeshBasicMaterial({ color: 0x00ffff })  // Cyan
+        // Create a labeled face texture (colored background with a number)
+        function createFaceTexture(number, bgColor) {
+            const size = 256;
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+
+            ctx.fillStyle = bgColor;
+            ctx.fillRect(0, 0, size, size);
+
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 8;
+            ctx.strokeRect(0, 0, size, size);
+
+            ctx.fillStyle = '#000000';
+            ctx.font = 'bold 180px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(String(number), size / 2, size / 2);
+
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        // BoxGeometry face order is +X, -X, +Y, -Y, +Z, -Z.
+        // At sensor yaw=0 the -Z face points toward the camera, so put "1" there.
+        const faces = [
+            { number: 3, color: '#0000ff' }, // +X (left)  - blue
+            { number: 4, color: '#ffff00' }, // -X (right)   - yellow
+            { number: 5, color: '#ff00ff' }, // +Y (top)    - magenta
+            { number: 6, color: '#00ffff' }, // -Y (bottom) - cyan
+            { number: 1, color: '#ff0000' }, // -Z (front)  - red
+            { number: 2, color: '#00ff00' }, // +Z (back)   - green
+
         ];
+        const materials = faces.map(f =>
+            new THREE.MeshBasicMaterial({ map: createFaceTexture(f.number, f.color) })
+        );
 
         // Create two cubes
         const geometry = new THREE.BoxGeometry();

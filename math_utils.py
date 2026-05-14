@@ -1,5 +1,20 @@
 import numpy as np
 
+def normalize_quaternion(q):
+    norm = np.linalg.norm(q)
+    return q / norm
+
+def quaternion_multiply(a, b):
+    """Hamilton product of two quaternions in (w, x, y, z) form."""
+    aw, ax, ay, az = a
+    bw, bx, by, bz = b
+    return [
+        aw * bw - ax * bx - ay * by - az * bz,
+        aw * bx + ax * bw + ay * bz - az * by,
+        aw * by - ax * bz + ay * bw + az * bx,
+        aw * bz + ax * by - ay * bx + az * bw,
+    ]
+
 def quaternion_to_euler(quat, sequence='ZXY'):
     """
     Convert quaternion to Euler angles.
